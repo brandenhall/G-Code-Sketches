@@ -1,0 +1,7 @@
+G-Code Sketches
+--
+This is a collection of G-Code programs I use to create various handy items with my 3-axis CNC mill.
+
+All programs have been tested and run with EMC v2.4 on a Lumenlab micRo m3 CNC mill.
+
+Please verify all code with your machine controller before running and use at your own risk.

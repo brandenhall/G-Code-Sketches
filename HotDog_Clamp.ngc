@@ -1,0 +1,98 @@
+(Hot Dog Clamp)
+(Copyright Branden Hall, 2011)
+(Released under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License)
+(http://creativecommons.org/licenses/by-nc-sa/3.0/)
+
+(Assembly instructions:
+(- Glue two halves together with standard wood glue leaving slot in the center)
+(- Use T-bolts or 1/4" 20tpi threaded rod to attach to your work surface)
+(- Use wing nut or similar to tighten down)
+
+#<_THICK> = 0.75		(Thickness of the clamp)
+#<_LENGTH> = 5			(Length of the inner arc of the clamp)
+#<_HEIGHT> = 0.51		(Height of the clamp, from surface to bottom of arc)
+
+
+#<_MR> = 40				(Moving feed rate)
+#<_FR> = 30				(Cutting feed rate)
+#<_DEPTH> = -0.50		(Depth of stock)
+#<_MILL> = 0.125		(Diameter of the end mill)
+#<_PASS> = -0.0625		(Depth for a single pass)
+
+#<_HALF_LENGTH> = [#<_LENGTH> / 2]
+
+(Turn off cutter radius compensation)
+G40
+
+(Set to inches)
+G20
+
+(Set to incremental units)
+G91
+
+(Defines the tool radius)
+G10 L1 P1 R[#<_MILL> / 2]
+
+(Set the default feed rate)
+F#<_MR>
+
+(Surface mill the center section)
+#<_SLOT_WIDTH> = [#<_LENGTH>/2]
+#<_SLOT_HEIGHT> = [#<_THICK> + #<_HEIGHT>]
+#<_SLOT_X> = [#<_THICK> + [#<_SLOT_WIDTH> / 2]]
+#<_SLOT_Y> = [#<_THICK> + #<_HEIGHT>]
+#<_SLOT_REPEAT> = FUP[#<_SLOT_HEIGHT> / [#<_MILL> / 2]]
+#<_SLOT_STEP> = [#<_SLOT_HEIGHT> / #<_SLOT_REPEAT>]
+
+#<_A> = SQRT[[[#<_HEIGHT> * #<_HEIGHT>] + [#<_HALF_LENGTH> * #<_HALF_LENGTH>]]]
+#<_S> = [0.5 * [#<_A> + #<_A> + #<_LENGTH>]]
+#<_K> = SQRT[#<_S> * [#<_S> - #<_A>] * [#<_S> - #<_A>] * [#<_S> - #<_LENGTH>]]
+#<_RADIUS> = [[#<_A> * #<_A> * #<_LENGTH>] / [4 * #<_K>]]
+#<_ANGLE> = [ATAN[#<_RADIUS> - #<_HEIGHT>]/[#<_HALF_LENGTH>]]
+#<_OFFSET_ANGLE> = [90 - #<_ANGLE>]
+#<_OFFSET_X> = [SIN[#<_OFFSET_ANGLE>] * #<_THICK>]
+#<_OFFSET_Y> = [COS[#<_OFFSET_ANGLE>] * #<_THICK>]
+#<_CENTER_X> = [SIN[#<_OFFSET_ANGLE>] * [#<_THICK> / 2]]
+#<_CENTER_Y> = [COS[#<_OFFSET_ANGLE>] * [#<_THICK> / 2]]
+
+G1 Z0.125
+
+O200 REPEAT[2]
+G1 X#<_SLOT_X> Y[#<_SLOT_Y> + #<_MILL>]
+G1 Z-0.125
+
+O100 REPEAT[#<_SLOT_REPEAT>]
+G1 F#<_FR> Z#<_PASS>
+G1 F#<_FR> X#<_SLOT_WIDTH>
+G1 F#<_FR> Z#<_PASS>
+G1 F#<_FR> X[#<_SLOT_WIDTH> * -1] 
+G1 F#<_FR> Z[#<_PASS> * -2]
+G1 F#<_FR> Y[#<_SLOT_STEP> * -1]
+O100 ENDREPEAT
+
+G1 Z0.125
+G1 X[#<_SLOT_X> * -1] Y[[[#<_SLOT_Y> - [#<_SLOT_STEP> * #<_SLOT_REPEAT>]] * -1] - #<_MILL>]
+
+G42 D1 X#<_THICK>
+G1 Z-0.125
+
+#1 = 0
+
+O101 WHILE[#1 GT #<_DEPTH>] 
+G1 F#<_FR> Z#<_PASS>
+G2 F#<_FR> X#<_LENGTH> Y0 I[#<_LENGTH>/2] J[[#<_RADIUS> - #<_HEIGHT>] * -1]
+G3 F#<_FR> X#<_OFFSET_X> Y#<_OFFSET_Y> I#<_CENTER_X> J#<_CENTER_Y>
+G3 F#<_FR> X[[#<_LENGTH> + [#<_OFFSET_X> * 2]] * -1] Y0 I[[#<_HALF_LENGTH> + #<_OFFSET_X>] * -1] J[[#<_RADIUS> - #<_HEIGHT> + #<_OFFSET_Y>] * -1]
+G3 F#<_FR> X#<_OFFSET_X> Y[#<_OFFSET_Y> * -1] I#<_CENTER_X> J[#<_CENTER_Y> * -1]
+#1 = [#1 + #<_PASS>]
+O101 ENDWHILE
+
+G1 Z[0.125 + [#1 * -1]]
+
+G40
+G1 X[#<_THICK> * -1] Y[#<_HEIGHT> + #<_THICK>]
+
+
+O200 ENDREPEAT
+
+M30
